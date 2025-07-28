@@ -1,22 +1,47 @@
 <template>
   <div class="p-6 max-w-xl mx-auto">
-    <router-link to="/Add" class="text-blue-500 underline"
-      >Go to Add Habit</router-link
-    >
-
-    <h1 class="text-2xl font-bold mb-4">🧠 Habit Tracker</h1>
-
-    <ul class="space-y-2">
-      <li
-        v-for="habit in habits"
-        :key="habit.id"
-        class="p-4 rounded bg-gray-100 shadow"
+    <nav class="flex space-x-4 p-4 bg-gray-100 rounded shadow">
+      <router-link to="/" class="font-bold text-lg hover:text-green-600"
+        >All Habit</router-link
       >
-        {{ habit.name }}
-      </li>
-    </ul>
+      <router-link to="/add" class="font-bold text-lg hover:text-green-600"
+        >Add Habit</router-link
+      >
+    </nav>
+    <h1 class="text-2xl font-bold my-4">🧠 Habit Tracker</h1>
 
-    <Button>Click me </Button>
+    <div v-if="habits.length === 0" class="text-gray-500 mb-4">
+      No habits found. Add a new habit to get started!
+    </div>
+    <div v-else class="mb-6">
+      <ul class="space-y-2">
+        <li
+          v-for="habit in habits"
+          :key="habit.id"
+          class="p-3 rounded bg-gray-100 shadow flex justify-between items-center"
+        >
+          <p>{{ habit.name }}</p>
+          <div class="flex space-x-2">
+            <Button
+              @click="toggleDone(habit)"
+              class="text-xl cursor-pointer"
+              variant="ghost"
+              size="icon"
+            >
+              {{ habit.done ? "✅" : "🔲" }}
+            </Button>
+            <Button
+              @click="handleDelete(habit.id)"
+              type="button"
+              variant="default"
+              class="px-4 cursor-pointer"
+            >
+              Delete
+            </Button>
+          </div>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -31,4 +56,21 @@ onMounted(async () => {
   const data = await res.json();
   habits.value = data;
 });
+
+async function handleDelete(id) {
+  await fetch(`http://localhost:8080/habits/${id}`, {
+    method: "DELETE",
+  });
+  habits.value = habits.value.filter((habit) => habit.id !== id);
+}
+
+async function toggleDone(habit) {
+  const res = await fetch(`http://localhost:8080/habits/${habit.id}/done`, {
+    method: "PATCH",
+  });
+  if (res.ok) {
+    const updated = await res.json();
+    habit.done = updated.done; // update the local state
+  }
+}
 </script>
