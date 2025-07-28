@@ -52,6 +52,13 @@ func main() {
 		c.JSON(http.StatusCreated, newHabit)
 	})
 
+	r.POST("/habits/reset", func(c *gin.Context) {
+		for i := range habits {
+			habits[i].Done = false
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "All habits reset to undone"})
+	})
+
 	r.DELETE("/habits/:id", func(c *gin.Context) {
 		idParam := c.Param("id")
 		id, err := strconv.Atoi(idParam)

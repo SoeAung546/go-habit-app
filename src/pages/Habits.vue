@@ -4,12 +4,22 @@
       <router-link to="/" class="font-bold text-lg hover:text-green-600"
         >All Habit</router-link
       >
-      <router-link to="/add" class="font-bold text-lg hover:text-green-600"
-        >Add Habit</router-link
-      >
+      <!-- <router-link to="/add" class="font-bold text-lg hover:text-green-600"
+        >New Page</router-link
+      > -->
     </nav>
-    <h1 class="text-2xl font-bold my-4">🧠 Habit Tracker</h1>
 
+    <div class="flex justify-between items-center my-4">
+      <h1 class="text-2xl font-bold">🧠 Habit Tracker</h1>
+
+      <Button
+        @click="handleReset"
+        class="cursor-pointer my-2"
+        variant="outline"
+      >
+        Start New Day
+      </Button>
+    </div>
     <div v-if="habits.length === 0" class="text-gray-500 mb-4">
       No habits found. Add a new habit to get started!
     </div>
@@ -42,6 +52,17 @@
         </li>
       </ul>
     </div>
+
+    <form @submit.prevent="addHabit" class="flex space-x-2 items-center">
+      <input
+        v-model="newHabit"
+        type="text"
+        placeholder="New habit"
+        required
+        class="border rounded p-2 flex-grow"
+      />
+      <Button type="submit"> Add </Button>
+    </form>
   </div>
 </template>
 
@@ -50,12 +71,36 @@ import { ref, onMounted } from "vue";
 import { Button } from "@/components/ui/button";
 
 const habits = ref([]);
+const newHabit = ref("");
 
 onMounted(async () => {
-  const res = await fetch("http://localhost:8080/habits");
-  const data = await res.json();
-  habits.value = data;
+  // const res = await fetch("http://localhost:8080/habits");
+  // const data = await res.json();
+  getHabits();
 });
+
+async function getHabits() {
+  const res = await fetch("http://localhost:8080/habits");
+  habits.value = await res.json();
+}
+
+async function addHabit() {
+  if (!newHabit.value.trim()) return;
+
+  const res = await fetch("http://localhost:8080/habits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: newHabit.value.trim() }),
+  });
+
+  if (res.ok) {
+    const habit = await res.json();
+    habits.value.push(habit);
+    newHabit.value = "";
+  } else {
+    alert("Failed to add habit");
+  }
+}
 
 async function handleDelete(id) {
   await fetch(`http://localhost:8080/habits/${id}`, {
@@ -71,6 +116,17 @@ async function toggleDone(habit) {
   if (res.ok) {
     const updated = await res.json();
     habit.done = updated.done; // update the local state
+  }
+}
+
+async function handleReset() {
+  const res = await fetch("http://localhost:8080/habits/reset", {
+    method: "POST",
+  });
+  if (res.ok) {
+    await getHabits(); // reload habits after reset
+  } else {
+    alert("Failed to reset habits");
   }
 }
 </script>
